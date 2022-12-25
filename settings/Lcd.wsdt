@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Workspace>
+  <ConfigDictionary>
+    
+  <CurrentConfigs><Project>Lcd/Debug</Project></CurrentConfigs></ConfigDictionary>
+  <Desktop>
+    <Static>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+        <Column0>100</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+      <Build><ColumnWidth0>21</ColumnWidth0><ColumnWidth1>723</ColumnWidth1><ColumnWidth2>192</ColumnWidth2><ColumnWidth3>48</ColumnWidth3></Build>
+      <Debug-Log/>
+      <TerminalIO/>
+      <Profiling/>
+      <Watch>
+        <Format>
+          <struct_types/>
+          <watch_formats/>
+        </Format>
+      </Watch>
+      <Disassembly>
+        
+        
+        
+      <MixedMode>1</MixedMode><CodeCovEnabled>0</CodeCovEnabled><CodeCovShow>0</CodeCovShow></Disassembly>
+    <Breakpoints/></Static>
+    <Windows>
+      
+      
+    <Wnd0>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-11797-13170</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>Lcd</ExpandedNode><ExpandedNode>Lcd/Output</ExpandedNode><ExpandedNode>Lcd/main.c</ExpandedNode><ExpandedNode>Lcd/portyLcd.c</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd0><Wnd1>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-27020-13294</Identity>
+            <TabName>Build</TabName>
+            <Factory>Build</Factory>
+            <Session/>
+          </Tab>
+          <Tab>
+            <Identity>TabID-15749-13300</Identity>
+            <TabName>Debug Log</TabName>
+            <Factory>Debug-Log</Factory>
+            <Session/>
+          </Tab>
+        <Tab><Identity>TabID-11831-9678</Identity><TabName>Breakpoints</TabName><Factory>Breakpoints</Factory><Session/></Tab></Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd1></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\lcd.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>53</SelStart><SelEnd>53</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\portyLcd.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>1065</SelStart><SelEnd>1076</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\Program Files\IAR Systems\Embedded Workbench 6.0 Evaluation\430\inc\msp430x14x.h</Filename><XPos>0</XPos><YPos>72</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\Program Files\IAR Systems\Embedded Workbench 6.0 Evaluation\430\inc\intrinsics.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\Program Files\IAR Systems\Embedded Workbench 6.0 Evaluation\430\inc\in430.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\portyLcd.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\main.c</Filename><XPos>0</XPos><YPos>37</YPos><SelStart>825</SelStart><SelEnd>825</SelEnd></Tab><ActiveTab>6</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\lcd.c</Filename><XPos>0</XPos><YPos>60</YPos><SelStart>1673</SelStart><SelEnd>1699</SelEnd></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-013663e0><key>iaridepm.enu1</key></Toolbar-013663e0></Sizes></Row0><Row1><Sizes/></Row1><Row2><Sizes/></Row2><Row3><Sizes/></Row3><Row4><Sizes/></Row4><Row5><Sizes/></Row5><Row6><Sizes/></Row6><Row7><Sizes/></Row7><Row8><Sizes/></Row8><Row9><Sizes/></Row9><Row10><Sizes/></Row10><Row11><Sizes/></Row11><Row12><Sizes/></Row12><Row13><Sizes/></Row13><Row14><Sizes/></Row14><Row15><Sizes/></Row15><Row16><Sizes/></Row16><Row17><Sizes/></Row17><Row18><Sizes/></Row18><Row19><Sizes/></Row19><Row20><Sizes/></Row20><Row21><Sizes/></Row21><Row22><Sizes/></Row22><Row23><Sizes/></Row23><Row24><Sizes/></Row24><Row25><Sizes/></Row25><Row26><Sizes/></Row26><Row27><Sizes/></Row27><Row28><Sizes/></Row28><Row29><Sizes/></Row29><Row30><Sizes/></Row30><Row31><Sizes/></Row31><Row32><Sizes/></Row32><Row33><Sizes/></Row33><Row34><Sizes/></Row34><Row35><Sizes/></Row35><Row36><Sizes/></Row36><Row37><Sizes/></Row37><Row38><Sizes/></Row38><Row39><Sizes/></Row39></Top><Left><Row0><Sizes><Wnd0><Rect><Top>-2</Top><Left>-2</Left><Bottom>380</Bottom><Right>191</Right><x>-2</x><y>-2</y><xscreen>193</xscreen><yscreen>153</yscreen><sizeHorzCX>180037</sizeHorzCX><sizeHorzCY>266087</sizeHorzCY><sizeVertCX>180037</sizeVertCX><sizeVertCY>664348</sizeVertCY></Rect></Wnd0></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd1><Rect><Top>-2</Top><Left>-2</Left><Bottom>151</Bottom><Right>1074</Right><x>-2</x><y>-2</y><xscreen>1076</xscreen><yscreen>153</yscreen><sizeHorzCX>1003731</sizeHorzCX><sizeHorzCY>266087</sizeHorzCY><sizeVertCX>180037</sizeVertCX><sizeVertCY>266087</sizeVertCY></Rect></Wnd1></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Workspace>
+
+
