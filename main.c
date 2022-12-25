@@ -27,7 +27,7 @@ void gameover()
     
      if(!((P4IN & BIT7)==BIT7))             //detekcja guzika B4
      {  
-         WDTCTL=0x00; 
+         WDTCTL=0x00; //przerwanie, powoduj¹ce powrót do main
      }
   }
 }
