@@ -2,204 +2,337 @@
 #include "lcd.h"
 #include "portyLcd.h"
 
-#define         B1                 BIT4&P4IN         // Klawisz B1 - P4.4
-#define         B2                 BIT5&P4IN         // Klawisz B2 - P4.4
-#define         B3                 BIT6&P4IN         // Klawisz B3 - P4.4
-#define         B4                 BIT7&P4IN         // Klawisz B4 - P4.4
+//---------Sta艂e---------//
+#define B1 BIT4&P4IN // Klawisz B1 - P4.4
+#define B2 BIT5&P4IN // Klawisz B2 - P4.5
+#define B3 BIT6&P4IN // Klawisz B3 - P4.6
+#define B4 BIT7&P4IN // Klawisz B4 - P4.7
 
-unsigned char i;
-unsigned char znak;
+// definicje blokow trasy
+// 0 - przeszkoda, 32 - puste, 36 - $
+const char blok1_0[16] = {32, 32,  0, 32, 36, 32,  0, 32, 32, 32, 32, 32,  0, 32, 32, 32};
+const char blok1_1[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32,  0, 32, 32, 32, 32, 36, 32};
 
-void gameover()
-{
-  clearDisplay();
-  SEND_CHAR('G');
-  SEND_CHAR('A');
-  SEND_CHAR('M');
-  SEND_CHAR('E');
-  SEND_CHAR(' ');
-  SEND_CHAR('O');
-  SEND_CHAR('V');
-  SEND_CHAR('E');
-  SEND_CHAR('R');
-  while(1)
-  {
-    
-     if(!((P4IN & BIT7)==BIT7))             //detekcja guzika B4
-     {  
-         WDTCTL=0x00; 
-     }
-  }
-}
+const char blok2_0[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32,  0, 32, 32, 32, 32, 36, 32};
+const char blok2_1[16] = {32, 32,  0, 32, 36, 32,  0, 32, 32, 32, 32, 32,  0, 32, 32, 32};
 
-int pow2(int a)
-{
-  int res = 2;
-  for(int i=2; i<=a; ++i)
-  {
-    res*=i;
-  }
-  return res;
-}
+const char blok3_0[16] = {32, 32, 32, 32, 32,  0, 32, 32, 32, 32, 32,  0, 32, 32, 32, 32};
+const char blok3_1[16] = {32, 32,  0, 36, 32, 32, 32, 32,  0, 36, 32, 32, 32, 36,  0, 32};
 
+//---------Zmienne globalne---------//
+int czyTrwaRozgrywka = 0 // 0 lub 1
+int wybranaPostac = 1; // 1, 2, 3 lub 4
+int aktualnyWynik = 0; // max 99
+int aktualnaPozycjaPostaci = 0; // 0 lub 1
+
+int najlepszyWynikPostac1 = 0 // max 99
+int najlepszyWynikPostac2 = 0 // max 99
+int najlepszyWynikPostac3 = 0 // max 99
+int najlepszyWynikPostac4 = 0 // max 99
+
+// bufor na wygenerowan膮 tras臋 (3 bloki po 16)
+char trasa_0[48];
+char trasa_1[48];
+
+int wskaznikTrasy = 0; // od 0 do 47
+
+// silnik gry
+
+// bufor na klatki do wyswietlenia
+char bufor_0[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32};
+char bufor_1[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32};
+
+//---------Deklaracje funkcji---------//
+
+void inicjalizacja();
+
+void dodanieZnakow();
+
+void ekranWyboruPostaci();
+
+void ekranRozpoczeciaRozgrywki();
+
+void ekranRozgrywki();
+
+void ekranPodsumowania();
+
+int ekranTablicyWynikow();
+
+void wyswietlKlatke();
+
+char getDziesiatki(int liczba);
+
+char getJednosci(int liczba);
+
+//---------Program g艂贸wny---------//
 
 void main( void )
 {
-znak='A';
-WDTCTL=WDTPW+ WDTHOLD;                        // zatrzymanie WDT
+  inicjalizacja();
 
-P1DIR = 0x00; 
-P4DIR = 0x00; 
-
-P1SEL = 0x00; 
-P1DIR = 0xff; 
-
-P2OUT |= BIT1;  // wylaczanie status leda
-
-P1OUT |= BIT5;  //REL1 ON
-
-InitPortsLcd();                               // inicjalizacja port體  
-InitLCD();                                    // inicjalizacja LCD
-clearDisplay();                               // czyszczenie LCD  
-
-
-P2OUT |= BIT1;  // wylaczanie status leda
-
-unsigned char ship_pos = 0x00;
-unsigned short draw_obst = 0;
-char line_a[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-char line_b[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-//unsigned short line_b = 0x0000f;
-
-while (1)                                    // niesko馽zona p阾la 
-{
-  Delayx100us(200);
-  Delayx100us(200);
-  Delayx100us(200);
-  
-  ++draw_obst;
-  if(draw_obst > 9)
-    draw_obst = 0;
-  
-  //line_a *=2;
-  //line_b *=2;
-  if(draw_obst == 1)
-    line_a[13] = 1;
-   if(draw_obst == 6)
-    line_b[13] = 1;
-  
-   
-  if((line_a[0] == 1) && (ship_pos == 0x00))
-     gameover();
-   if((line_b[0] == 1) && (ship_pos == 0x01))
-      gameover();
-  
-  SEND_CMD(DD_RAM_ADDR);
-  P2OUT |= BIT1;
-  clearDisplay();
-  if(ship_pos == BIT0)
-    SEND_CMD(DD_RAM_ADDR2);
-  SEND_CHAR('O');
-  SEND_CHAR('>');
-  SEND_CMD(DD_RAM_ADDR+2);
-  
-  for(int i=0; i<=13; ++i)
-      {
-        line_a[i] = line_a[i+1];
-        line_b[i] = line_b[i+1];
-        if(line_a[i] == 1)
-        {
-          SEND_CMD(DD_RAM_ADDR+2+i);
-            SEND_CHAR('X');
-         // SEND_CMD(DD_RAM_ADDR2); SEND_CHAR('*'); //info ze jest przeszkoda
-        }
-       //   else SEND_CHAR('.');
-
-        if(line_b[i] == 1)
-        {
-          SEND_CMD(DD_RAM_ADDR2+2+i);
-            SEND_CHAR('X');
-          //  SEND_CMD(DD_RAM_ADDR2); SEND_CHAR('*'); //info ze jest przeszkoda
-          
-        }
-       //   else SEND_CHAR('.');
-      }
-  line_a[13] = 0;
-      
-  /*
-  for(int i=13; i>=1; --i)
+  while(1)
   {
-    
-    power = pow2(i);
-    if((power & line_a) == power)
+    // wyb贸r postaci
+    ekranWyboruPostaci();
+
+    // rozgrywka wybran膮 postaci膮 
+    do
     {
-      
-      
+      ekranRozpoczeciaRozgrywki();
+      ekranRozgrywki();
+      ekranPodsumowania();
     }
-   
+    while(ekranTablicyWynikow() == 1); // 1 - graj dalej
   }
-  */
-
-
- if(!((P4IN & BIT4)==BIT4))             //detekcja guzika B1
- {  
-   
-   ship_pos ^= BIT0;
-   P2OUT &= ~BIT1;  
-   Delayx100us(50);
- }
-
- if(!((P4IN & BIT7)==BIT7))             //detekcja guzika B3
- {  
-   while(1){};
-   
- }
- /*
- if(!((P4IN & BIT7)==BIT7))             //detekcja guzika B4
- {  
-   WDTCTL=0x00; 
-   
- }*/
- 
- /*if ((P4IN & BIT5)==BIT5)             //detekcja guzika B2
- {
-   
-   P2OUT &= ~BIT1;  
-  
-   SEND_CMD(DATA_ROL_RIGHT);
-   Delayx100us(20);
- }
-}*/
 }
+
+//---------Definicje fukncji---------//
+
+void inicjalizacja()
+{
+  WDTCTL = WDTPW + WDTHOLD; // zatrzymanie WDT
+
+  // LCD
+  InitPortsLcd(); // inicjalizacja port贸w LCD
+  InitLCD(); // inicjalizacja LCD
+  clearDisplay(); // wyczyszczenie ekranu
+  dodanieZnakow(); // dodanie w艂asnych znak贸w do pami臋ci LCD
+
+  // Timer + przerwania
+
 }
-/*
- if ((P4IN & BIT6)==BIT6)             //detekcja guzika B3
- {
-   Delayx100us(2500);  
-   P2OUT &= ~BIT1;  
-  
-   ch_cnt = ch_cnt + SEND_CHAR(znak);
-   SEND_CHAR(znak);
-   //P2OUT ^=BIT1;
- }
- 
- if ((P4IN & BIT7)==BIT7)             //detekcja guzika B4
- {
-   Delayx100us(2500);  
-   P2OUT &= ~BIT1;  
-  
-   ch_cnt = ch_cnt + SEND_CHAR(znak);
-   SEND_CHAR(znak);
-   //P2OUT ^=BIT1;
- } */
 
-/*
+void dodanieZnakow()
+{
+  // zdefiniowanie znakow
+  int przeszkoda[8]={31, 31, 31, 31, 31, 31, 31, 31};
+  int postac1[8]={31, 21, 27, 17, 31, 14, 10, 27};
+  int postac2[8]={14, 14, 4, 31, 4, 4, 10, 17};
+  int postac3[8]={31, 17, 17, 17, 31, 31, 27, 27};
+  int postac4[8]={14, 21, 27, 14, 14, 0, 14, 27};
 
+  // zapisanie znakow w pamieci CG_RAM
+  SEND_CMD(CG_RAM_ADDR);
 
-for (i=0;i<16;i++)
- {
-   //SEND_CMD(DATA_ROL_LEFT);                  // przesuwanie napisu w lewo    
-    ch_cnt += SEND_CHAR(znak);
-    Delayx100us(2500);                        // op鬅nienie
+  // adres znaku: 0
+  for(int i=0; i<8; i++)
+    SEND_CHAR(przeszkoda[i]); 
+
+  // adres znaku: 1
+  for(int i=0; i<8; i++)
+    SEND_CHAR(postac1[i]);
+
+  // adres znaku: 2
+  for(int i=0; i<8; i++)
+    SEND_CHAR(postac2[i]);
+
+  // adres znaku: 3
+  for(int i=0; i<8; i++)
+    SEND_CHAR(postac3[i]);
+
+  // adres znaku: 4
+  for(int i=0; i<8; i++)
+    SEND_CHAR(postac4[i]);
+}
+
+// obs艂uga ekranu wyboru postaci
+void ekranWyboruPostaci()
+{
+  // przygotowanie klatki do wyswietlenia
+  strncpy(bufor_0, " WYBIERZ POSTAC ", 16);
+  strncpy(bufor_1, " 1_  2_  3_  4_ ", 16);
+  bufor_1[2] = 1;
+  bufor_1[6] = 2;
+  bufor_1[10] = 3;
+  bufor_1[14] = 4;
+
+  // wy艣wietlenie klatki
+  wyswietlKlatke();
+
+  // obs艂uga wyboru za pomoc膮 przycisk贸w
+  while(1)
+  {
+    if (B1 == 0) {
+        wybranaPostac = 1;
+        return;
+    }
+    else if (B2 == 0) {
+        wybranaPostac = 2;
+        return;
+    }
+    else if (B3 == 0) {
+        wybranaPostac = 3;
+        return;
+    }
+    else if (B4 == 0) {
+        wybranaPostac = 4;
+        return;
+    }
   }
- }*/
+}
+
+// obs艂uga ekranu rozpoczecia rozgrywki
+void ekranRozpoczeciaRozgrywki()
+{
+  // przygotowanie klatki do wyswietlenia
+  strncpy(bufor_0, "    POSTAC:_    ", 16);
+  strncpy(bufor_1, "  1:ROZPOCZNIJ  ", 16);
+  bufor_0[11] = wybranaPostac;
+  
+  // wy艣wietlenie klatki
+  wyswietlKlatke();
+
+  // obs艂uga przycisku
+  while(1)
+  {
+    if (B1 == 0)  
+      return; 
+  } 
+}
+
+// obs艂uga ekranu rozgrywki
+void ekranRozgrywki()
+{
+  //wygenerowanie startowej trasy (3 bloki)
+
+  // petla dopoki trwa gra
+  while(czyTrwaRozgrywka==1)
+  {   
+    // sprawdzenie kolizji
+    if (sprawdzenieKolizji() != 1)
+    {
+      // przygotowanie pustej klatki
+      strncpy(bufor_0, "                ", 16);
+      strncpy(bufor_1, "                ", 16);
+      // aktualny wynik
+      bufor_0[0] = getDziesiatki(aktualnyWynik);
+      bufor_0[1] = getJednosci(aktualnyWynik);
+      // przeszkody i punkty
+      int indeks = wskaznikTrasy;
+      for (int i=0; i<14; i++)
+      {
+          bufor_0[i+2] = trasa_0[(indeks+i)%48];
+          bufor_1[i+2] = trasa_1[(indeks+i)%48];       
+      }
+      // postac
+      if (aktualnaPozycjaPostaci = 0)
+        bufor_0[2] = wybranaPostac;
+      else if (aktualnaPozycjaPostaci = 1)
+        bufor_1[2] = wybranaPostac;
+
+      // wyswietlenie klatki
+      wyswietlKlatke();
+    }
+    else
+    {
+      break;
+    }
+    
+    // obsluga sterowania postacia tutaj albo przerzucic t膮 fukncje do przerwania od timera
+    if (B1 == 0)
+      aktualnaPozycjaPostaci ^= 1;
+
+    // w przerwaniu od timera przesuwanie wska藕nika trasy i generowanie trasy
+  }
+}
+
+// sprawdza czy na w miejscu postaci jest przeszkoda albo punkt
+// zwraca 0 jezeli nie ma kolizji
+// zwraca 1 jezeli nastapilo zderzenie z przeszkoda
+// zwraca 2 jezeli zebrano punkt
+int sprawdzenieKolizji()
+{
+  //dodanie punktu jezeli zebrano i usuni臋cie punktu z trasy
+  return 0;
+}
+
+// obs艂uga ekranu podsumowania
+void ekranPodsumowania()
+{
+  // przygotowanie klatki do wyswietlenia
+  strncpy(bufor_0, "    WYNIK:__    ", 16);
+  strncpy(bufor_1, "     1DALEJ     ", 16);
+
+  bufor_0[10] = getDziesiatki(aktualnyWynik);
+  bufor_0[11] = getJednosci(aktualnyWynik);
+  
+  // wy艣wietlenie klatki
+  wyswietlKlatke();
+
+  // obs艂uga przycisku
+  while(1)
+  {
+    if (B1 == 0)  
+      return; 
+  } 
+}
+
+// obs艂uga ekranu podsumowania
+// zwraca 1 lub 2 : (graj dalej / powr贸t do menu)
+int ekranTablicyWynikow()
+{
+  // przygotowanie klatki do wyswietlenia
+  strncpy(bufor_0, "___ ___ ___ ___ ", 16);
+  strncpy(bufor_1, "1GRAJ DAL. 2MENU", 16);
+
+  bufor_0[0] = 1;
+  bufor_0[1] = getDziesiatki(najlepszyWynikPostac1);
+  bufor_0[2] = getJednosci(najlepszyWynikPostac1);
+
+  bufor_0[4] = 2;
+  bufor_0[5] = getDziesiatki(najlepszyWynikPostac2);
+  bufor_0[6] = getJednosci(najlepszyWynikPostac2);
+
+  bufor_0[8] = 3;
+  bufor_0[9] = getDziesiatki(najlepszyWynikPostac3);
+  bufor_0[10] = getJednosci(najlepszyWynikPostac3);
+
+  bufor_0[12] = 4;
+  bufor_0[13] = getDziesiatki(najlepszyWynikPostac4);
+  bufor_0[14] = getJednosci(najlepszyWynikPostac4);
+  
+  // wy艣wietlenie klatki
+  wyswietlKlatke();
+
+  // obs艂uga przycisk贸w
+  while(1)
+  {
+    if (B1 == 0) {
+        return 1;
+    }
+    else if (B2 == 0) {
+        return 2;
+    }
+  }
+  return = 0;
+}
+
+// wyswietla na ekranie aktualn膮 klatk臋 z bufora
+void wyswietlKlatke()
+{
+  // g贸rna linia
+  SEND_CMD(DD_RAM_ADDR);
+  for(int i=0; i<16; i++)
+    SEND_CHAR(bufor_0[i]);
+
+  // dolna linia
+  SEND_CMD(DD_RAM_ADDR2);
+  for(int i=0; i<16; i++)
+    SEND_CHAR(bufor_1[i]);
+}
+
+//------Funkcje u偶ytkowe------//
+
+// zwraca liczbe dziesiatek danej liczby
+char getDziesiatki(int liczba) {
+  if (liczba < 10) {
+    return '0';
+  } else {
+    return (liczba / 10) + '0';
+  }
+}
+
+// zwraca liczbe jednosci danej liczby
+char getJednosci(int liczba) {
+  return (liczba % 10) + '0';
+}

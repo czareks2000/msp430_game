@@ -1,0 +1,5 @@
+portyLcd.pbi: \
+  C:\Users\czare\Mój\ dysk\Studia\Architektura\ Komputerów\Gra\msp430_game\portyLcd.c \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.5\430\inc\msp430x14x.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.5\430\inc/in430.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.5\430\inc/intrinsics.h
