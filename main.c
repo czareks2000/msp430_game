@@ -1,4 +1,6 @@
 #include <msp430x14x.h>
+#include <stdlib.h>
+#include <string.h>
 #include "lcd.h"
 #include "portyLcd.h"
 
@@ -9,6 +11,8 @@
 #define B4 BIT7&P4IN // Klawisz B4 - P4.7
 
 // definicje blokow trasy
+const int liczbaBlokow = 3;
+
 // 0 - przeszkoda, 32 - puste, 36 - $
 const char blok1_0[16] = {32, 32,  0, 32, 36, 32,  0, 32, 32, 32, 32, 32,  0, 32, 32, 32};
 const char blok1_1[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32,  0, 32, 32, 32, 32, 36, 32};
@@ -19,16 +23,19 @@ const char blok2_1[16] = {32, 32,  0, 32, 36, 32,  0, 32, 32, 32, 32, 32,  0, 32
 const char blok3_0[16] = {32, 32, 32, 32, 32,  0, 32, 32, 32, 32, 32,  0, 32, 32, 32, 32};
 const char blok3_1[16] = {32, 32,  0, 36, 32, 32, 32, 32,  0, 36, 32, 32, 32, 36,  0, 32};
 
-//---------Zmienne globalne---------//
-int czyTrwaRozgrywka = 0 // 0 lub 1
+//---------Zmienne globalne (warstwa logiki)---------//
+
+int czyTrwaRozgrywka = 0; // 0 lub 1
 int wybranaPostac = 1; // 1, 2, 3 lub 4
 int aktualnyWynik = 0; // max 99
 int aktualnaPozycjaPostaci = 0; // 0 lub 1
 
-int najlepszyWynikPostac1 = 0 // max 99
-int najlepszyWynikPostac2 = 0 // max 99
-int najlepszyWynikPostac3 = 0 // max 99
-int najlepszyWynikPostac4 = 0 // max 99
+int najlepszyWynikPostac1 = 0; // max 99
+int najlepszyWynikPostac2 = 0; // max 99
+int najlepszyWynikPostac3 = 0; // max 99
+int najlepszyWynikPostac4 = 0; // max 99
+
+//---------Zmienne globalne (warstwa silnika)---------//
 
 // bufor na wygenerowaną trasę (3 bloki po 16)
 char trasa_0[48];
@@ -36,11 +43,13 @@ char trasa_1[48];
 
 int wskaznikTrasy = 0; // od 0 do 47
 
-// silnik gry
-
 // bufor na klatki do wyswietlenia
 char bufor_0[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32};
 char bufor_1[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32};
+
+// zmienne zwiazane z czasem
+unsigned int licznik = 0; // licznik setnych sekundy
+unsigned int czestotliwoscPrzesuwania = 200; // 200*10ms = 2 sekundy
 
 //---------Deklaracje funkcji---------//
 
@@ -53,6 +62,16 @@ void ekranWyboruPostaci();
 void ekranRozpoczeciaRozgrywki();
 
 void ekranRozgrywki();
+
+void przygotowanieKlatkiRozgrywki();
+
+void aktualizacjaPrzyspieszenia();
+
+void przesuniecieTrasy();
+
+int sprawdzenieKolizji();
+
+void generowanieTrasy();
 
 void ekranPodsumowania();
 
@@ -72,17 +91,17 @@ void main( void )
 
   while(1)
   {
-    // wybór postaci
+    // menu wyboru postaci
     ekranWyboruPostaci();
 
-    // rozgrywka wybraną postacią 
+    // rozgrywka wybraną postacią, dopóki gracz nie wróci do menu
     do
     {
       ekranRozpoczeciaRozgrywki();
       ekranRozgrywki();
       ekranPodsumowania();
     }
-    while(ekranTablicyWynikow() == 1); // 1 - graj dalej
+    while(ekranTablicyWynikow()); // 0 - powrót do menu
   }
 }
 
@@ -98,8 +117,18 @@ void inicjalizacja()
   clearDisplay(); // wyczyszczenie ekranu
   dodanieZnakow(); // dodanie własnych znaków do pamięci LCD
 
-  // Timer + przerwania
+  // Basic Clock Module ustawiamy na ACLK(zegar 8 MHz ) i dzielimy częstotliwość przez 2 (4 MHz)
+  BCSCTL1 |= XTS;  // ACLK = LFXT1 = HF XTAL 8MHz
 
+  BCSCTL1 |= DIVA_1; // ACLK=8 MHz/2=4 MHz
+  BCSCTL2 |= SELM0 | SELM1; // zmieniamy Master Clock(MCLK) na zegar LFXT1CLK
+
+  // Timer_A  ustawiamy na 500 kHz
+  TACTL = TASSEL_1 + MC_1 + ID_3; // Wybieramy ACLK + tryb Up + ACLK/8=500kHz 
+  CCTL0 = CCIE; // włączenie przerwań od CCR0
+  CCR0 = 5000; // (1/500k)*5000=0.01, przerwanie co 10 ms
+
+  _EINT(); // włączenie obłsługi przerwań
 }
 
 void dodanieZnakow()
@@ -193,57 +222,192 @@ void ekranRozpoczeciaRozgrywki()
 // obsługa ekranu rozgrywki
 void ekranRozgrywki()
 {
-  //wygenerowanie startowej trasy (3 bloki)
+  // wygenerowanie startowej trasy (3 bloki)
+  generowanieTrasy(0);
+  generowanieTrasy(16);
+  generowanieTrasy(32);
+
+  // rozpoczecie rozgrywki
+  czyTrwaRozgrywka = 1;
 
   // petla dopoki trwa gra
-  while(czyTrwaRozgrywka==1)
-  {   
-    // sprawdzenie kolizji
-    if (sprawdzenieKolizji() != 1)
-    {
-      // przygotowanie pustej klatki
-      strncpy(bufor_0, "                ", 16);
-      strncpy(bufor_1, "                ", 16);
-      // aktualny wynik
-      bufor_0[0] = getDziesiatki(aktualnyWynik);
-      bufor_0[1] = getJednosci(aktualnyWynik);
-      // przeszkody i punkty
-      int indeks = wskaznikTrasy;
-      for (int i=0; i<14; i++)
-      {
-          bufor_0[i+2] = trasa_0[(indeks+i)%48];
-          bufor_1[i+2] = trasa_1[(indeks+i)%48];       
-      }
-      // postac
-      if (aktualnaPozycjaPostaci = 0)
-        bufor_0[2] = wybranaPostac;
-      else if (aktualnaPozycjaPostaci = 1)
-        bufor_1[2] = wybranaPostac;
-
-      // wyswietlenie klatki
-      wyswietlKlatke();
-    }
-    else
-    {
-      break;
-    }
-    
-    // obsluga sterowania postacia tutaj albo przerzucic tą fukncje do przerwania od timera
+  while(czyTrwaRozgrywka)
+  { 
+    // obsluga sterowania postacia
     if (B1 == 0)
       aktualnaPozycjaPostaci ^= 1;
 
-    // w przerwaniu od timera przesuwanie wskaźnika trasy i generowanie trasy
+    // jezeli minela odpowiednia ilosc czasu
+    if (licznik >= czestotliwoscPrzesuwania)
+    {
+      // przesuniecie wyswietlanej trasy
+      przesuniecieTrasy();
+
+      // sprawdzenie kolizji
+      if (sprawdzenieKolizji() == 2)// jeżeli zdobyto punkt
+        aktualizacjaPrzyspieszenia();
+
+      // zerowanie licznika setnych sekundy
+      licznik = 0; 
+    } 
+
+    // obliczenie klatki
+    przygotowanieKlatkiRozgrywki();
+
+    // wyswietlenie klatki
+    wyswietlKlatke();
   }
 }
 
-// sprawdza czy na w miejscu postaci jest przeszkoda albo punkt
+// przygotowanie klatki rozgrywki 
+void przygotowanieKlatkiRozgrywki()
+{
+  // przygotowanie pustej klatki  
+  strncpy(bufor_0, "                ", 16);
+  strncpy(bufor_1, "                ", 16);
+
+  // aktualny wynik
+  bufor_0[0] = getDziesiatki(aktualnyWynik);
+  bufor_0[1] = getJednosci(aktualnyWynik);
+
+  // postac
+  if (aktualnaPozycjaPostaci == 0)
+    bufor_0[2] = wybranaPostac;
+  else if (aktualnaPozycjaPostaci == 1)
+    bufor_1[2] = wybranaPostac;
+
+  // jezeli przeszkoda lub punkt na pozycji postaci
+  if (trasa_0[wskaznikTrasy] != ' ')
+    bufor_0[2] = trasa_0[wskaznikTrasy];
+  if (trasa_1[wskaznikTrasy] != ' ')
+    bufor_1[2] = trasa_1[wskaznikTrasy];
+
+  // przeszkody i punkty na reszcie trasy
+  for (int i=1; i<14; i++)
+  {
+      bufor_0[i+2] = trasa_0[(wskaznikTrasy+i)%48];
+      bufor_1[i+2] = trasa_1[(wskaznikTrasy+i)%48];       
+  }
+}
+
+// procedura obsługi przerwania od TimerA
+#pragma vector=TIMERA0_VECTOR
+__interrupt void Timer_A (void)
+{
+  if (czyTrwaRozgrywka)
+  {
+    licznik++; //zwiększenie licznika setnych sekundy
+  }
+}
+
+// fukncja aktualizująca przyspieszenie
+void aktualizacjaPrzyspieszenia()
+{
+  //przyspieszenie o 50ms;
+  czestotliwoscPrzesuwania -= 5;
+}
+
+// przesuwa wskaznik trasy i generuje nową trase jezeli jest wolne miejse
+void przesuniecieTrasy()
+{
+  // przesuwaniecie wskaźnika trasy
+  wskaznikTrasy++;
+
+  // generowanie trasy jezeli jest miejsce (wskaźnik ma wartość: (16, 32, 48))
+  if (wskaznikTrasy == 16 || wskaznikTrasy == 32 || wskaznikTrasy == 48)
+    generowanieTrasy(wskaznikTrasy-16);
+  
+  // cofniecie wskaznika na poczatek
+  if (wskaznikTrasy == 48)
+    wskaznikTrasy = 0;
+}
+
+// obsluga kolizji
 // zwraca 0 jezeli nie ma kolizji
 // zwraca 1 jezeli nastapilo zderzenie z przeszkoda
 // zwraca 2 jezeli zebrano punkt
 int sprawdzenieKolizji()
 {
-  //dodanie punktu jezeli zebrano i usunięcie punktu z trasy
-  return 0;
+  // jeżeli postać w górnej linii
+  if (aktualnaPozycjaPostaci == 0)
+  {
+    // jeżeli na trasie nic nie ma
+    if (trasa_0[wskaznikTrasy] == 32)
+      return 0;
+
+    // jeżeli na trasie jest przeszkoda
+    if (trasa_0[wskaznikTrasy] == 0)
+    {
+      // zakonczenie rozgrywki
+      czyTrwaRozgrywka = 0;
+      return 1;
+    }
+
+    // jeżeli na trasie jest punkt
+    if(trasa_0[wskaznikTrasy] == 36)
+    {
+      // dodanie punktu
+      aktualnyWynik++;
+      // usunięcie elementu z trasy
+      trasa_0[wskaznikTrasy] = 32;
+      return 2;
+    }
+  }
+
+  // jeżeli postać w dolnej linii
+  if (aktualnaPozycjaPostaci == 1)
+  {
+    // jeżeli na trasie nic nie ma
+    if (trasa_1[wskaznikTrasy] == 32)
+      return 0;
+
+    // jeżeli na trasie jest przeszkoda
+    if (trasa_1[wskaznikTrasy] == 0)
+    {
+      // zakonczenie rozgrywki
+      czyTrwaRozgrywka = 0;
+      return 1;
+    } 
+
+    // jeżeli na trasie jest punkt
+    if(trasa_1[wskaznikTrasy] == 36)
+    {
+      // dodanie punktu
+      aktualnyWynik++;
+      // usunięcie elementu z trasy
+      trasa_1[wskaznikTrasy] = 32;
+      return 2;
+    }
+  }
+  
+  return -1;
+}
+
+// dodaje losowy blok do trasy
+// jako argument przyjmuje wskaznik do miejsca na trasie, w którym ma być wstawiony blok
+void generowanieTrasy(int indeks)
+{
+  // Wygenerowanie liczby z zakresu od 0 do liczbaBlokow - 1
+  int r = rand() % liczbaBlokow;
+
+  // Wybranie bloku na postawie wygenerowanej liczby
+  switch (r) {
+    case 0:
+      // Dodanie bloku1 do trasy 
+      memcpy(&trasa_0[indeks], blok1_0, sizeof(blok1_0));
+      memcpy(&trasa_1[indeks], blok1_1, sizeof(blok1_1));
+      break;
+    case 1:
+      // Dodanie bloku2 do trasy 
+      memcpy(&trasa_0[indeks], blok2_0, sizeof(blok2_0));
+      memcpy(&trasa_1[indeks], blok2_1, sizeof(blok2_1));
+      break;
+    case 2:
+      // Dodanie bloku3 do trasy 
+      memcpy(&trasa_0[indeks], blok3_0, sizeof(blok3_0));
+      memcpy(&trasa_1[indeks], blok3_1, sizeof(blok3_1));
+      break;
+  }
 }
 
 // obsługa ekranu podsumowania
@@ -268,7 +432,7 @@ void ekranPodsumowania()
 }
 
 // obsługa ekranu podsumowania
-// zwraca 1 lub 2 : (graj dalej / powrót do menu)
+// zwraca 1 lub 0 : (graj dalej / powrót do menu)
 int ekranTablicyWynikow()
 {
   // przygotowanie klatki do wyswietlenia
@@ -301,10 +465,9 @@ int ekranTablicyWynikow()
         return 1;
     }
     else if (B2 == 0) {
-        return 2;
+        return 0;
     }
   }
-  return = 0;
 }
 
 // wyswietla na ekranie aktualną klatkę z bufora
