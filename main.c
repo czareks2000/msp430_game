@@ -226,6 +226,8 @@ void ekranRozgrywki()
   generowanieTrasy(0);
   generowanieTrasy(16);
   generowanieTrasy(32);
+  wskaznikTrasy = 0;
+  czestotliwoscPrzesuwania = 200; // 2 sekundy
 
   // rozpoczecie rozgrywki
   czyTrwaRozgrywka = 1;
