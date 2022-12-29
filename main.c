@@ -245,13 +245,13 @@ void ekranRozgrywki()
       // przesuniecie wyswietlanej trasy
       przesuniecieTrasy();
 
-      // sprawdzenie kolizji
-      if (sprawdzenieKolizji() == 2)// jeżeli zdobyto punkt
-        aktualizacjaPrzyspieszenia();
-
       // zerowanie licznika setnych sekundy
       licznik = 0; 
     } 
+
+    // sprawdzenie kolizji
+    if (sprawdzenieKolizji() == 2)// jeżeli zdobyto punkt
+      aktualizacjaPrzyspieszenia();
 
     // obliczenie klatki
     przygotowanieKlatkiRozgrywki();
