@@ -41,8 +41,8 @@ char trasa_1[48];
 
 int wskaznikTrasy = 0; // od 0 do 47
 
-// czestotliwosc aktualizacji polozenia obiektow
-unsigned int czestotliwoscPrzesuwania = 200; // 200*10ms = 2 sekundy
+// okres aktualizacji polozenia obiektow
+unsigned int okresPrzesuwania = 200; // 200*10ms = 2 sekundy
 
 //---------Zmienne globalne (warstwa silnika)---------//
 
@@ -231,7 +231,7 @@ void ekranRozgrywki()
   // reset zmiennych
   wskaznikTrasy = 0;
   aktualnyWynik = 0;
-  czestotliwoscPrzesuwania = 200; // 2 sekundy
+  okresPrzesuwania = 200; // 2 sekundy
 
   // rozpoczecie rozgrywki
   czyTrwaRozgrywka = 1;
@@ -244,7 +244,7 @@ void ekranRozgrywki()
       aktualnaPozycjaPostaci ^= 1;
 
     // jezeli minela odpowiednia ilosc czasu
-    if (licznik >= czestotliwoscPrzesuwania)
+    if (licznik >= okresPrzesuwania)
     {
       // przesuniecie wyswietlanej trasy
       przesuniecieTrasy();
@@ -310,7 +310,7 @@ __interrupt void Timer_A (void)
 void aktualizacjaPrzyspieszenia()
 {
   //przyspieszenie o 50ms;
-  czestotliwoscPrzesuwania -= 5;
+  okresPrzesuwania -= 5;
 }
 
 // przesuwa wskaznik trasy i generuje nową trase jezeli jest wolne miejse
