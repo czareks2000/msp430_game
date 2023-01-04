@@ -35,13 +35,16 @@ int najlepszyWynikPostac2 = 0; // max 99
 int najlepszyWynikPostac3 = 0; // max 99
 int najlepszyWynikPostac4 = 0; // max 99
 
-//---------Zmienne globalne (warstwa silnika)---------//
-
 // bufor na wygenerowaną trasę (3 bloki po 16)
 char trasa_0[48];
 char trasa_1[48];
 
 int wskaznikTrasy = 0; // od 0 do 47
+
+// czestotliwosc aktualizacji polozenia obiektow
+unsigned int czestotliwoscPrzesuwania = 200; // 200*10ms = 2 sekundy
+
+//---------Zmienne globalne (warstwa silnika)---------//
 
 // bufor na klatki do wyswietlenia
 char bufor_0[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32};
@@ -49,7 +52,6 @@ char bufor_1[16] = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 
 
 // zmienne zwiazane z czasem
 unsigned int licznik = 0; // licznik setnych sekundy
-unsigned int czestotliwoscPrzesuwania = 200; // 200*10ms = 2 sekundy
 
 //---------Deklaracje funkcji---------//
 
@@ -226,7 +228,9 @@ void ekranRozgrywki()
   generowanieTrasy(0);
   generowanieTrasy(16);
   generowanieTrasy(32);
+  // reset zmiennych
   wskaznikTrasy = 0;
+  aktualnyWynik = 0;
   czestotliwoscPrzesuwania = 200; // 2 sekundy
 
   // rozpoczecie rozgrywki
